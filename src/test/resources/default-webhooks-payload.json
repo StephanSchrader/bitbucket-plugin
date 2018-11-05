@@ -1,0 +1,75 @@
+{
+  "eventKey": "repo:refs_changed",
+  "date": "2018-11-02T10:32:22+0000",
+  "actor": {
+    "name": "doe",
+    "emailAddress": "doe@example.com",
+    "id": 340,
+    "displayName": "John Doe",
+    "active": true,
+    "slug": "doe",
+    "type": "NORMAL",
+    "links": {
+      "self": [
+        {
+          "href": "https://git.example.com/users/doe"
+        }
+      ]
+    }
+  },
+  "repository": {
+    "slug": "repository-name",
+    "id": 350,
+    "name": "repository-name",
+    "scmId": "git",
+    "state": "AVAILABLE",
+    "statusMessage": "Available",
+    "forkable": true,
+    "project": {
+      "key": "ABCD",
+      "id": 169,
+      "name": "project-name",
+      "description": "Lorem Ipsum",
+      "public": false,
+      "type": "NORMAL",
+      "links": {
+        "self": [
+          {
+            "href": "https://git.example.com/projects/ABCD"
+          }
+        ]
+      }
+    },
+    "public": false,
+    "links": {
+      "clone": [
+        {
+          "href": "https://git.example.com/scm/abcd/repository-name.git",
+          "name": "http"
+        },
+        {
+          "href": "ssh://git@git.example.com:2222/abcd/repository-name.git",
+          "name": "ssh"
+        }
+      ],
+      "self": [
+        {
+          "href": "https://git.example.com/projects/ABCD/repos/repository-name/browse"
+        }
+      ]
+    }
+  },
+  "changes": [
+    {
+      "ref": {
+        "id": "refs/heads/develop",
+        "displayId": "develop",
+        "type": "BRANCH"
+      },
+      "refId": "refs/heads/develop",
+      "fromHash": "1234567890",
+      "toHash": "987654321",
+      "type": "UPDATE"
+    }
+  ]
+}

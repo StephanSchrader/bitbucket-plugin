@@ -8,11 +8,15 @@ import javax.servlet.http.HttpServletRequest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.InputStream;
+import java.util.Objects;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BitbucketPayloadProcessorTest {
@@ -104,4 +108,15 @@ public class BitbucketPayloadProcessorTest {
         verify(probe).triggerMatchingJobs("old_user", "https://staging.bitbucket.org/old_user/old_repo", "git", payload.toString());
     }
 
+    @Test
+    public void processDefaultWebhookPayloadBitBucketServer() throws Exception {
+        when(request.getHeader("x-event-key")).thenReturn("repo:refs_changed");
+
+        InputStream in = getClass().getResourceAsStream("/default-webhooks-payload.json");
+        JSONObject payload = JSONObject.fromObject(IOUtils.toString(Objects.requireNonNull(in, "default-webhooks-payload.json")));
+
+        payloadProcessor.processPayload(payload, request);
+
+        verify(probe).triggerMatchingJobs("doe", "https://git.example.com/scm/abcd/repository-name.git", "git", payload.toString());
+    }
 }

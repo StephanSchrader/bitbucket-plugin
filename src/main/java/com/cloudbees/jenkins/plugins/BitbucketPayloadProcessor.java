@@ -2,11 +2,14 @@ package com.cloudbees.jenkins.plugins;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 public class BitbucketPayloadProcessor {
@@ -22,15 +25,22 @@ public class BitbucketPayloadProcessor {
     }
 
     public void processPayload(JSONObject payload, HttpServletRequest request) {
+        String eventKey = request.getHeader("x-event-key");
+
         if ("Bitbucket-Webhooks/2.0".equals(request.getHeader("user-agent"))) {
-            if ("repo:push".equals(request.getHeader("x-event-key"))) {
+            if ("repo:push".equals(eventKey)) {
                 LOGGER.log(Level.INFO, "Processing new Webhooks payload");
                 processWebhookPayload(payload);
             }
         } else if (payload.has("actor") && payload.has("repository")) {
-            if ("repo:push".equals(request.getHeader("x-event-key"))) {
+            if ("repo:push".equals(eventKey)) {
                 LOGGER.log(Level.INFO, "Processing new Webhooks payload");
                 processWebhookPayloadBitBucketServer(payload);
+            } else if ("repo:refs_changed".equals(eventKey)) {
+                LOGGER.log(Level.INFO, "Processing new default Webhooks payload");
+                processDefaultWebhookPayloadBitBucketServer(payload);
+            } else {
+                LOGGER.log(Level.INFO, "Skip processing Webhooks payload, event: '" + eventKey + "'");
             }
         } else {
             LOGGER.log(Level.INFO, "Processing old POST service payload");
@@ -80,6 +90,29 @@ public class BitbucketPayloadProcessor {
                 LOGGER.log(Level.WARNING, String.format("URL %s is malformed", url), e);
             }
         }
+    }
+
+    /**
+     * Process payload from default <em>Webhooks</em> Plugin.
+     * See: http://docs.atlassian.com/bitbucketserver/docs-0514/Managing+webhooks+in+Bitbucket+server
+     */
+    private void processDefaultWebhookPayloadBitBucketServer(JSONObject payload) {
+        String user = payload.getJSONObject("actor").getString("name");
+
+        JSONObject repo = payload.getJSONObject("repository");
+        String scm = repo.has("scmId") ? repo.getString("scmId") : "git";
+
+        JSONArray cloneUrls = repo.getJSONObject("links").getJSONArray("clone");
+        List<String> urls = new ArrayList<>();
+        for (int i = 0; i < cloneUrls.size(); i++) {
+            urls.add(cloneUrls.getJSONObject(i).getString("href"));
+        }
+
+        if (urls.isEmpty()) {
+            LOGGER.log(Level.WARNING, "No clone urls in repository");
+            return;
+        }
+        probe.triggerMatchingJobs(user, urls.get(0), scm, payload.toString());
     }
 
 /*
