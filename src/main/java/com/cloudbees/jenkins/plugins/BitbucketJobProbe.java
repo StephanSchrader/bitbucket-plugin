@@ -1,6 +1,7 @@
 package com.cloudbees.jenkins.plugins;
 
 import hudson.model.Job;
+import hudson.plugins.git.BranchSpec;
 import hudson.plugins.git.GitSCM;
 import hudson.plugins.git.GitStatus;
 import hudson.plugins.mercurial.MercurialSCM;
@@ -29,10 +30,14 @@ public class BitbucketJobProbe {
 
     @Deprecated
     public void triggerMatchingJobs(String user, String url, String scm) {
-        triggerMatchingJobs(user, url, scm, "");
+        triggerMatchingJobs(user, url, scm, null, "");
     }
 
     public void triggerMatchingJobs(String user, String url, String scm, String payload) {
+        triggerMatchingJobs(user, url, scm, null, payload);
+    }
+
+    public void triggerMatchingJobs(String user, String url, String scm, String branch, String payload) {
         if ("git".equals(scm) || "hg".equals(scm)) {
             SecurityContext old = Jenkins.getInstance().getACL().impersonate(ACL.SYSTEM);
             try {
@@ -55,11 +60,13 @@ public class BitbucketJobProbe {
                         SCMTriggerItem item = SCMTriggerItem.SCMTriggerItems.asSCMTriggerItem(job);
                         List<SCM> scmTriggered = new ArrayList<SCM>();
                         for (SCM scmTrigger : item.getSCMs()) {
-                            if (match(scmTrigger, remote) && !hasBeenTriggered(scmTriggered, scmTrigger)) {
+                            if (match(scmTrigger, remote, branch) && !hasBeenTriggered(scmTriggered, scmTrigger)) {
                                 LOGGER.log(Level.INFO, "Triggering BitBucket job {0}", job.getName());
                                 scmTriggered.add(scmTrigger);
                                 bTrigger.onPost(user, payload);
-                            } else LOGGER.log(Level.FINE, "{0} SCM doesn't match remote repo {1}", new Object[]{job.getName(), remote});
+                            } else {
+                                LOGGER.log(Level.FINE, "{0} SCM doesn't match remote repo {1}, branch {2}", new Object[]{job.getName(), remote, branch});
+                            }
                         }
                     } else
                         LOGGER.log(Level.FINE, "{0} hasn't BitBucketTrigger set", job.getName());
@@ -84,12 +91,13 @@ public class BitbucketJobProbe {
         return false;
     }
 
-    private boolean match(SCM scm, URIish url) {
+    private boolean match(SCM scm, URIish url, String branch) {
         if (scm instanceof GitSCM) {
-            for (RemoteConfig remoteConfig : ((GitSCM) scm).getRepositories()) {
+            GitSCM gitScm = (GitSCM) scm;
+            for (RemoteConfig remoteConfig : gitScm.getRepositories()) {
                 for (URIish urIish : remoteConfig.getURIs()) {
                     if (looselyMatch(url, urIish)) {
-                    	return true;
+                        return matchAnyBranch(gitScm, branch);
                     }
                 }
             }
@@ -136,6 +144,21 @@ public class BitbucketJobProbe {
             LOGGER.log(Level.SEVERE, "Could not parse repository uri: {0}, {1}", new Object[]{repository, ex});
         }
         return result;
+    }
+
+    private boolean matchAnyBranch(GitSCM scm, String branch) {
+        if (branch == null) {
+            return true;
+        }
+
+        for (BranchSpec branchSpec : scm.getBranches()) {
+            boolean matches = branchSpec.matches(branch);
+            if (matches) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static final Logger LOGGER = Logger.getLogger(BitbucketJobProbe.class.getName());

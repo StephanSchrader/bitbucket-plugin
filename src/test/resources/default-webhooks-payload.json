@@ -70,6 +70,17 @@
       "fromHash": "1234567890",
       "toHash": "987654321",
       "type": "UPDATE"
+    },
+    {
+      "ref": {
+        "id": "refs/heads/feature/lorem",
+        "displayId": "feature/lorem",
+        "type": "BRANCH"
+      },
+      "refId": "refs/heads/feature/lorem",
+      "fromHash": "1234567890",
+      "toHash": "987654321",
+      "type": "UPDATE"
     }
   ]
 }

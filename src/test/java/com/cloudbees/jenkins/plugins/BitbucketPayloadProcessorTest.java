@@ -117,6 +117,7 @@ public class BitbucketPayloadProcessorTest {
 
         payloadProcessor.processPayload(payload, request);
 
-        verify(probe).triggerMatchingJobs("doe", "https://git.example.com/scm/abcd/repository-name.git", "git", payload.toString());
+        verify(probe).triggerMatchingJobs("doe", "https://git.example.com/scm/abcd/repository-name.git", "git", "/develop", payload.toString());
+        verify(probe).triggerMatchingJobs("doe", "https://git.example.com/scm/abcd/repository-name.git", "git", "/feature/lorem", payload.toString());
     }
 }

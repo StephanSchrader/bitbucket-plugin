@@ -112,7 +112,27 @@ public class BitbucketPayloadProcessor {
             LOGGER.log(Level.WARNING, "No clone urls in repository");
             return;
         }
-        probe.triggerMatchingJobs(user, urls.get(0), scm, payload.toString());
+
+        // find branches to build
+        List<String> branches = new ArrayList<>();
+        JSONArray changes = payload.getJSONArray("changes");
+        for (int i = 0; i < changes.size(); i++) {
+            JSONObject change = changes.getJSONObject(i);
+            JSONObject ref = change.getJSONObject("ref");
+            String refType = ref.getString("type");
+            if ("BRANCH".equals(refType)) {
+                String branchId = ref.getString("displayId");
+                branches.add("/".concat(branchId));
+            }
+        }
+
+        if (branches.isEmpty()) {
+            probe.triggerMatchingJobs(user, urls.get(0), scm, payload.toString());
+        } else {
+            for (String branch : branches) {
+                probe.triggerMatchingJobs(user, urls.get(0), scm, branch, payload.toString());
+            }
+        }
     }
 
 /*
