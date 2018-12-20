@@ -86,4 +86,11 @@ public class BitbucketJobProbeTest {
         payloadLink = new URIish("https://git.example.com/scm/abcd/repository-name.git");
         Assert.assertTrue(payloadProcessor.looselyMatch(payloadLink, cloneUrl));
     }
+
+    @Test
+    public void testLooselyMatchSsh_No_Project() throws URISyntaxException {
+        URIish cloneUrl = new URIish("ssh://git@git.example.com:2222/~doe/repository-name.git");
+        URIish payloadLink = new URIish("ssh://git@git.example.com:2222/~doe/repository-name.git");
+        Assert.assertTrue(payloadProcessor.looselyMatch(payloadLink, cloneUrl));
+    }
 }

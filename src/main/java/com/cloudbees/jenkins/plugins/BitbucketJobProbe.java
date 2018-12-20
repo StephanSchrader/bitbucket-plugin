@@ -123,8 +123,10 @@ public class BitbucketJobProbe {
             // so strip everything in the url before /<project>/<repo
             int indexOfLastSlash = url.getPath().lastIndexOf('/');
             int indexOfLastButOneSlash = url.getPath().lastIndexOf('/', indexOfLastSlash - 1);
-            String projectRepoPath = url.getPath().substring(indexOfLastButOneSlash);
-            url = url.setPath(projectRepoPath);
+            if (indexOfLastButOneSlash > -1) {
+                String projectRepoPath = url.getPath().substring(indexOfLastButOneSlash);
+                url = url.setPath(projectRepoPath);
+            }
         } else /* assume HTTP(S) */ {
             // HTTP clone repository contains '/scm/' somewhere after the context path.
             urIish = urIish.setPath(urIish.getPath().replaceFirst("/scm/", "/"));
